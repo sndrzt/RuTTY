@@ -790,10 +790,10 @@ void save_open_settings(settings_w *sesskey, Conf *conf)
     write_setting_i(sesskey, "ScriptLineDelay", conf_get_int(conf, CONF_script_line_delay));
     write_setting_i(sesskey, "ScriptCharDelay", conf_get_int(conf, CONF_script_char_delay));
     write_setting_s(sesskey, "ScriptCondLine", conf_get_str(conf, CONF_script_cond_line));
-    write_setting_i(sesskey, "ScriptCondUse", conf_get_int(conf, CONF_script_cond_use));
+    write_setting_b(sesskey, "ScriptCondUse", conf_get_bool(conf, CONF_script_cond_use));
     write_setting_i(sesskey, "ScriptCRLF", conf_get_int(conf, CONF_script_crlf));
-    write_setting_i(sesskey, "ScriptEnable", conf_get_int(conf, CONF_script_enable));
-    write_setting_i(sesskey, "ScriptExcept", conf_get_int(conf, CONF_script_except));
+    write_setting_b(sesskey, "ScriptEnable", conf_get_bool(conf, CONF_script_enable));
+    write_setting_b(sesskey, "ScriptExcept", conf_get_bool(conf, CONF_script_except));
     write_setting_i(sesskey, "ScriptTimeout", conf_get_int(conf, CONF_script_timeout));
     write_setting_s(sesskey, "ScriptWait", conf_get_str(conf, CONF_script_waitfor));
     write_setting_s(sesskey, "ScriptHalt", conf_get_str(conf, CONF_script_halton));
@@ -1270,10 +1270,10 @@ void load_open_settings(settings_r *sesskey, Conf *conf)
 	gppi(sesskey, "ScriptLineDelay", 0, conf, CONF_script_line_delay);
 	gppi(sesskey, "ScriptCharDelay", 0, conf, CONF_script_char_delay);
 	gpps(sesskey, "ScriptCondLine", ":", conf, CONF_script_cond_line);
-	gppi(sesskey, "ScriptCondUse", 0, conf, CONF_script_cond_use);   
+	gppb(sesskey, "ScriptCondUse", false, conf, CONF_script_cond_use);   
 	gppi(sesskey, "ScriptCRLF", SCRIPT_NOLF, conf, CONF_script_crlf);
-	gppi(sesskey, "ScriptEnable", 0, conf, CONF_script_enable);  
-	gppi(sesskey, "ScriptExcept", 0, conf, CONF_script_except);  
+	gppb(sesskey, "ScriptEnable", false, conf, CONF_script_enable);  
+	gppb(sesskey, "ScriptExcept", false, conf, CONF_script_except);  
 	gppi(sesskey, "ScriptTimeout", 30, conf, CONF_script_timeout);
 	gpps(sesskey, "ScriptWait", "", conf, CONF_script_waitfor);
 	gpps(sesskey, "ScriptHalt", "", conf, CONF_script_halton);

@@ -119,12 +119,12 @@ CFLAGS += -D_WIN32_IE=0x0500
 CFLAGS += -DWINVER=0x0500 -D_WIN32_WINDOWS=0x0410 -D_WIN32_WINNT=0x0500
 
 #rutty
-CFLAGS += $(VER)
-RCFLAGS += $(VER)
+CFLAGS += -Drutty=0.15 -Dputty=0.71
+RCFLAGS += -Drutty=0.15 -Dputty=0.71
 
 .SUFFIXES:
 
-all: pageant.exe plink.exe pscp.exe psftp.exe putty.exe puttygen.exe \
+all: pageant.exe pscp.exe psftp.exe putty.exe puttygen.exe \
 		puttytel.exe testcrypt.exe
 
 pageant.exe: aqsync.o conf.o ecc.o marshal.o memory.o misc.o mpint.o \

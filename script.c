@@ -18,9 +18,9 @@ void script_init(ScriptData * scriptdata, Conf * conf)
     scriptdata->cond_char =  conf_get_str(conf, CONF_script_cond_line)[0];
     if(scriptdata->cond_char =='\0') 
       scriptdata->cond_char =':';  /* if none use default */
-    scriptdata->enable = conf_get_int(conf, CONF_script_enable);
-    scriptdata->cond_use = (scriptdata->enable)?conf_get_int(conf, CONF_script_cond_use):FALSE;  /* can only be true if wait is enabled */
-    scriptdata->except = conf_get_int(conf, CONF_script_except);
+    scriptdata->enable = conf_get_bool(conf, CONF_script_enable);
+    scriptdata->cond_use = (scriptdata->enable)?conf_get_bool(conf, CONF_script_cond_use):FALSE;  /* can only be true if wait is enabled */
+    scriptdata->except = conf_get_bool(conf, CONF_script_except);
     scriptdata->timeout = conf_get_int(conf, CONF_script_timeout) * TICKSPERSEC ;  /* in winstuff.h */
 
     script_cond_set(scriptdata->waitfor, &scriptdata->waitfor_c, conf_get_str(conf, CONF_script_waitfor), strlen(conf_get_str(conf, CONF_script_waitfor)));

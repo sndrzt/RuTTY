@@ -1499,10 +1499,10 @@ NORETURN void cleanup_exit(int);
    X(INT, NONE, script_line_delay) \
    X(INT, NONE, script_char_delay) \
    X(STR, NONE, script_cond_line) \
-   X(INT, NONE, script_cond_use) \
+   X(BOOL, NONE, script_cond_use) \
    X(INT, NONE, script_crlf) \
-   X(INT, NONE, script_enable) \
-   X(INT, NONE, script_except) \
+   X(BOOL, NONE, script_enable) \
+   X(BOOL, NONE, script_except) \
    X(INT, NONE, script_timeout) \
    X(STR, NONE, script_waitfor) \
    X(STR, NONE, script_halton) \
