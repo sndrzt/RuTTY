@@ -101,7 +101,7 @@ static bool load_chm_resource(void)
 
     for (uint64_t counter = 0;; counter++) {
         filename = dupprintf(
-            "%s\\putty_%lu_%"PRIu64".chm", tempdir, pid, counter);
+            "%s\\putty_%lu_%I64u.chm", tempdir, pid, counter);
         filehandle = CreateFile(
             filename, GENERIC_WRITE, FILE_SHARE_READ,
             NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);

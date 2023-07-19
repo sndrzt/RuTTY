@@ -758,7 +758,7 @@ char *rsa2_invalid(ssh_key *key, unsigned flags)
     const ssh_hashalg *halg = rsa2_hash_alg_for_flags(flags, &sign_alg_name);
     if (nbytes < rsa_pkcs1_length_of_fixed_parts(halg)) {
         return dupprintf(
-            "%zu-bit RSA key is too short to generate %s signatures",
+            "%u-bit RSA key is too short to generate %s signatures",
             bits, sign_alg_name);
     }
 

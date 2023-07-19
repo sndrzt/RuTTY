@@ -1,6 +1,12 @@
 #include "rcstuff.h"
 
+/* rutty: */
+#ifdef rutty
+#define APPNAME "RuTTY"
+#else
 #define APPNAME "PuTTY"
+#endif
+
 #define APPDESC "SSH, Telnet and Rlogin client"
 
 #include "winhelp.rc2"

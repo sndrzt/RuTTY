@@ -181,12 +181,26 @@ static INT_PTR CALLBACK LicenceProc(HWND hwnd, UINT msg,
 {
     switch (msg) {
       case WM_INITDIALOG:
+#ifdef rutty
+	{
+	    char *str = dupprintf("%s Licence", appname);
+	    SetWindowText(hwnd, str);
+	    sfree(str);
+      char *text = dupprintf("%s%s",
+                 "RuTTY, Record and Replay PuTTY.\r\n"
+                 "RuTTY is copyright 2013-2019 Ernst Dijk.\r\n",
+                 LICENCE_TEXT("\r\n\r\n"));
+    SetDlgItemText(hwnd, IDA_TEXT, text);
+    sfree(text);
+	}
+#else
 	{
 	    char *str = dupprintf("%s Licence", appname);
 	    SetWindowText(hwnd, str);
 	    sfree(str);
             SetDlgItemText(hwnd, IDA_TEXT, LICENCE_TEXT("\r\n\r\n"));
 	}
+#endif
 	return 1;
       case WM_COMMAND:
 	switch (LOWORD(wParam)) {
@@ -210,9 +224,24 @@ static INT_PTR CALLBACK AboutProc(HWND hwnd, UINT msg,
 
     switch (msg) {
       case WM_INITDIALOG:
+
 	str = dupprintf("About %s", appname);
 	SetWindowText(hwnd, str);
 	sfree(str);
+#ifdef rutty
+        {
+#define STR1(x) #x
+#define STR(x) STR1(x)
+            char *text = dupprintf("%s\r\n\r\n%s %s\r\n(based on %s %s)\r\n\r\n%s",
+                 "RuTTY, Record and Replay PuTTY.",
+                 appname, STR(rutty), "PuTTY", STR(putty),
+                 "RuTTY is copyright \251 2013-2019 Ernst Dijk.\r\n"
+                 "PuTTY is copyright \251 1997-2019 Simon Tatham.\r\n"
+                 "All rights reserved.\r\n");
+            SetDlgItemText(hwnd, IDA_TEXT, text);
+            sfree(text);
+        }
+#else
         {
             char *buildinfo_text = buildinfo("\r\n");
             char *text = dupprintf
@@ -223,6 +252,7 @@ static INT_PTR CALLBACK AboutProc(HWND hwnd, UINT msg,
             SetDlgItemText(hwnd, IDA_TEXT, text);
             sfree(text);
         }
+#endif
 	return 1;
       case WM_COMMAND:
 	switch (LOWORD(wParam)) {
@@ -244,6 +274,17 @@ static INT_PTR CALLBACK AboutProc(HWND hwnd, UINT msg,
 			 "https://www.chiark.greenend.org.uk/~sgtatham/putty/",
 			 0, 0, SW_SHOWDEFAULT);
 	    return 0;
+
+/* rutty: */
+#ifdef rutty
+	  case IDA_WEB2:
+	    /* Load web browser */
+	    ShellExecute(hwnd, "open",
+			 "https://sourceforge.net/projects/rutty/",
+			 0, 0, SW_SHOWDEFAULT);
+	    return 0;
+#endif  /* rutty */
+
 	}
 	return 0;
       case WM_CLOSE:
@@ -591,9 +632,9 @@ static INT_PTR CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
                 return 0;
 
             i = TreeView_GetSelection(((LPNMHDR) lParam)->hwndFrom);
- 
+
  	    SendMessage (hwnd, WM_SETREDRAW, false, 0);
- 
+
 	    item.hItem = i;
 	    item.pszText = buffer;
 	    item.cchTextMax = sizeof(buffer);
@@ -620,7 +661,7 @@ static INT_PTR CALLBACK GenericMainDlgProc(HWND hwnd, UINT msg,
 	    create_controls(hwnd, (char *)item.lParam);
 
 	    dlg_refresh(NULL, &dp);    /* set up control values */
- 
+
 	    SendMessage (hwnd, WM_SETREDRAW, true, 0);
  	    InvalidateRect (hwnd, NULL, true);
 
@@ -1004,7 +1045,7 @@ LogPolicy default_logpolicy[1] = {{ &default_logpolicy_vt }};
 
 /*
  * Warn about the obsolescent key file format.
- * 
+ *
  * Uniquely among these functions, this one does _not_ expect a
  * frontend handle. This means that if PuTTY is ported to a
  * platform which requires frontend handles, this function will be

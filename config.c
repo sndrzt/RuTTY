@@ -10,10 +10,16 @@
 #include "dialog.h"
 #include "storage.h"
 
+/* rutty: */
+#ifdef rutty
+#include "script.h"
+#endif  /* rutty */
+
 #define PRINTER_DISABLED_STRING "None (printing disabled)"
 
 #define HOST_BOX_TITLE "Host Name (or IP address)"
 #define PORT_BOX_TITLE "Port"
+
 
 void conf_radiobutton_handler(union control *ctrl, dlgparam *dlg,
 			      void *data, int event)
@@ -1676,6 +1682,59 @@ void setup_config_box(struct controlbox *b, bool midsession,
 		      conf_checkbox_handler, I(CONF_logomitdata));
     }
 
+/* rutty: Session/Scripting panel */
+#ifdef rutty
+	ctrl_settitle(b, "Session/Scripting", "Scripting");
+  if (!midsession)
+  {
+    s = ctrl_getset(b, "Session/Scripting", "Start", NULL);
+     ctrl_filesel(s, "Script filename:", 'f',
+       NULL, TRUE, "Select filename for script replay", HELPCTX(no_help),
+       conf_filesel_handler, I(CONF_script_filename));
+     ctrl_radiobuttons(s, NULL, 'm', 4, HELPCTX(no_help),
+            conf_radiobutton_handler, I(CONF_script_mode),
+            "Off", I(SCRIPT_STOP),
+            "Replay", I(SCRIPT_PLAY),
+            "Record", I(SCRIPT_RECORD),
+            NULL);
+  }
+  
+   	s = ctrl_getset(b, "Session/Scripting", "Scripting", NULL);
+    
+    ctrl_editbox(s, "line delay (ms)", 'd', 40, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_line_delay), I(-1));
+
+	ctrl_editbox(s, "character delay (ms)", 'b', 40, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_char_delay), I(-1));
+	
+	ctrl_editbox(s, "start of condition/comment line", 'l', 40, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_cond_line), I(1));
+
+    ctrl_radiobuttons(s, "CR/LF translation:", 't', 4, HELPCTX(no_help),
+          conf_radiobutton_handler,I(CONF_script_crlf),
+          "Off", I(SCRIPT_OFF),
+          "no LF", I(SCRIPT_NOLF),
+          "CR", I(SCRIPT_CR),
+          "Rec", I(SCRIPT_REC),
+          NULL);
+
+	ctrl_editbox(s, "halt on", 'x', 80, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_halton), I(1));
+	ctrl_checkbox(s, "wait for response from host", 'r', HELPCTX(no_help),
+		  conf_checkbox_handler, I(CONF_script_enable));
+  ctrl_checkbox(s, "except for first command", 's', HELPCTX(no_help),
+		  conf_checkbox_handler, I(CONF_script_except));
+	ctrl_checkbox(s, "use conditions from file", 'v', HELPCTX(no_help),
+		  conf_checkbox_handler, I(CONF_script_cond_use));
+      
+	ctrl_editbox(s, "timeout (sec)", 'u', 40, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_timeout),I(-1));
+  
+	ctrl_editbox(s, "wait for", 'k', 80, HELPCTX(no_help),
+		 conf_editbox_handler, I(CONF_script_waitfor),I(1));
+     
+#endif  /* rutty */
+        
     /*
      * The Terminal panel.
      */

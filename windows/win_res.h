@@ -22,6 +22,9 @@
 #define IDA_LICENCE     1003
 #define IDA_WEB         1004
 
+/* rutty: */
+#define IDA_WEB2        1007
+
 #define IDC_TAB         1001
 #define IDC_TABSTATIC1  1002
 #define IDC_TABSTATIC2  1003

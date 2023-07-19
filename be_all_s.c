@@ -14,7 +14,14 @@
  * have tiny little source modules containing nothing but
  * declarations of appname, for as long as I can...
  */
+
+ /* rutty: */
+#ifdef rutty
+const char *const appname = "RuTTY";
+#else
 const char *const appname = "PuTTY";
+#endif /* rutty */
+
 
 #ifdef TELNET_DEFAULT
 const int be_default_protocol = PROT_TELNET;

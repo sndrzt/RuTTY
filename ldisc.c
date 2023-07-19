@@ -22,10 +22,20 @@
                       (backend_ldisc_option_state(ldisc->backend, LD_EDIT) || \
 			   term_ldisc(ldisc->term, LD_EDIT))))
 
+         /* rutty: special entry point for local data (in windows.c) */
+#ifdef rutty
+static void c_write(Ldisc *ldisc, const void *buf, int len)
+{
+    seat_output_local(ldisc->seat, false, buf, len);
+}
+#else
 static void c_write(Ldisc *ldisc, const void *buf, int len)
 {
     seat_stdout(ldisc->seat, buf, len);
 }
+
+#endif /* rutty */
+
 
 static int plen(Ldisc *ldisc, unsigned char c)
 {
@@ -126,6 +136,12 @@ void ldisc_echoedit_update(Ldisc *ldisc)
     seat_echoedit_update(ldisc->seat, ECHOING, EDITING);
 }
 
+/* rutty: */
+#ifdef rutty
+#include "script.h"
+extern ScriptData scriptdata;  /* in window.c */
+#endif /* rutty */
+
 void ldisc_send(Ldisc *ldisc, const void *vbuf, int len, bool interactive)
 {
     const char *buf = (const char *)vbuf;
@@ -145,6 +161,11 @@ void ldisc_send(Ldisc *ldisc, const void *vbuf, int len, bool interactive)
          */
         term_nopaste(ldisc->term);
     }
+
+/* rutty: */
+#ifdef rutty
+	script_local(&scriptdata, buf,len);
+#endif /* rutty */
 
     /*
      * Less than zero means null terminated special string.
@@ -248,7 +269,7 @@ void ldisc_send(Ldisc *ldisc, const void *vbuf, int len, bool interactive)
 		 * allows ordinary ^M^J to do the same thing as
 		 * magic-^M when in Raw protocol. The line `case
 		 * KCTRL('M'):' is _inside_ the if block. Thus:
-		 * 
+		 *
 		 *  - receiving regular ^M goes straight to the
 		 *    default clause and inserts as a literal ^M.
 		 *  - receiving regular ^J _not_ directly after a

@@ -226,6 +226,21 @@ static UINT wm_mousewheel = WM_MOUSEWHEEL;
     (((wch) >= 0x180B && (wch) <= 0x180D) || /* MONGOLIAN FREE VARIATION SELECTOR */ \
      ((wch) >= 0xFE00 && (wch) <= 0xFE0F)) /* VARIATION SELECTOR 1-16 */
 
+/* rutty: */
+#ifdef rutty
+#define IDM_SCRIPT (0x5100)
+#define IDM_SCRIPTSEND (0x5110)
+#define IDM_SCRIPTHALT (0x5120)
+
+#include "..\script.h" 
+ScriptData scriptdata; 
+
+#include "script_win.c" 
+#include "script_ahk.c" 
+#include "..\script.c" 
+
+#endif  /* rutty */   
+
 static bool wintw_setup_draw_ctx(TermWin *);
 static void wintw_draw_text(TermWin *, int x, int y, wchar_t *text, int len,
                             unsigned long attrs, int lattrs, truecolour tc);
@@ -330,11 +345,13 @@ StripCtrlChars *win_seat_stripctrl_new(
     return stripctrl_new_term(bs_out, false, 0, term);
 }
 
-static size_t win_seat_output(
-    Seat *seat, bool is_stderr, const void *, size_t);
+static size_t win_seat_output(Seat *seat, bool is_stderr, const void *, size_t);
+
+/* rutty */
+static size_t win_seat_output_local(Seat *seat, bool is_stderr, const void *, size_t);
+
 static bool win_seat_eof(Seat *seat);
-static int win_seat_get_userpass_input(
-    Seat *seat, prompts_t *p, bufchain *input);
+static int win_seat_get_userpass_input(Seat *seat, prompts_t *p, bufchain *input);
 static void win_seat_notify_remote_exit(Seat *seat);
 static void win_seat_connection_fatal(Seat *seat, const char *msg);
 static void win_seat_update_specials_menu(Seat *seat);
@@ -343,6 +360,7 @@ static bool win_seat_set_trust_status(Seat *seat, bool trusted);
 
 static const SeatVtable win_seat_vt = {
     win_seat_output,
+    win_seat_output_local,  /* rutty */    
     win_seat_eof,
     win_seat_get_userpass_input,
     win_seat_notify_remote_exit,
@@ -363,6 +381,7 @@ static const SeatVtable win_seat_vt = {
 };
 static Seat win_seat_impl = { &win_seat_vt };
 Seat *const win_seat = &win_seat_impl;
+
 
 static void start_backend(void)
 {
@@ -435,6 +454,15 @@ static void start_backend(void)
     session_closed = false;
 
     sfree(title_to_free);
+    
+    /* rutty: */
+#ifdef rutty
+    script_init(&scriptdata, conf);
+    if(conf_get_int(conf, CONF_script_mode) == SCRIPT_PLAY && !filename_is_null(conf_get_filename(conf, CONF_script_filename)))
+      script_sendfile(&scriptdata, conf_get_filename(conf, CONF_script_filename));
+	else if(conf_get_int(conf, CONF_script_mode) == SCRIPT_RECORD && !filename_is_null(conf_get_filename(conf, CONF_script_filename)))
+      script_record(&scriptdata, conf_get_filename(conf, CONF_script_filename));
+#endif  /* rutty */
 }
 
 static void close_session(void *ignored_context)
@@ -846,6 +874,12 @@ int WINAPI WinMain(HINSTANCE inst, HINSTANCE prev, LPSTR cmdline, int show)
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
 	    AppendMenu(m, MF_ENABLED, IDM_SHOWLOG, "&Event Log");
 	    AppendMenu(m, MF_SEPARATOR, 0, 0);
+      
+#ifdef rutty 
+        AppendMenu(m, MF_ENABLED, IDM_SCRIPTSEND, "Send &script file" ) ;
+        AppendMenu(m, MF_SEPARATOR, IDM_SCRIPT, 0);
+#endif /* rutty */  
+      
 	    AppendMenu(m, MF_ENABLED, IDM_NEWSESS, "Ne&w Session...");
 	    AppendMenu(m, MF_ENABLED, IDM_DUPSESS, "&Duplicate Session");
 	    AppendMenu(m, MF_POPUP | MF_ENABLED, (UINT_PTR) savedsess_menu,
@@ -2196,12 +2230,36 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	    char *str;
 	    show_mouseptr(true);
 	    str = dupprintf("%s Exit Confirmation", appname);
+      
+/* rutty: */
+#ifdef rutty
+	  if (scriptdata.runs)
+		{
+		  if (session_closed ||
+		  MessageBox(hwnd,
+			   "session scripting is running !\n Are you sure you want to close this session?",
+			   str, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON1) == IDOK)
+		  {
+        script_close(&scriptdata);
+        script_record_stop(&scriptdata);
+		  	DestroyWindow(hwnd);
+		  }
+		}
+		else
+#endif  /* rutty */     
 	    if (session_closed || !conf_get_bool(conf, CONF_warn_on_close) ||
 		MessageBox(hwnd,
 			   "Are you sure you want to close this session?",
 			   str, MB_ICONWARNING | MB_OKCANCEL | MB_DEFBUTTON1)
 		== IDOK)
-		DestroyWindow(hwnd);
+#ifdef rutty
+		{
+			script_record_stop(&scriptdata);
+			DestroyWindow(hwnd);
+		}
+#else
+			DestroyWindow(hwnd);
+#endif  /* rutty */ 
 	    sfree(str);
 	}
 	return 0;
@@ -2218,6 +2276,32 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	    update_savedsess_menu();
 	    return 0;
 	}
+  
+#ifdef rutty
+    case WM_COPYDATA:
+	{
+       COPYDATASTRUCT *cds;
+       cds = (COPYDATASTRUCT *) lParam;
+       if (cds->dwData == ruttyAHK_send)
+       {
+         script_ahk_send(&scriptdata, cds);
+         return 1;
+       }  
+       else if (cds->dwData == ruttyAHK_enable)
+       {
+         script_ahk_enable(cds);
+         return 1;
+       }  
+       else if (cds->dwData == ruttyAHK_set)
+       {
+         script_ahk_set(cds);
+         return 1;
+       }  
+       else  
+         return 0;  /* not our message */
+    } 
+    break; 
+#endif  /* rutty */      
 	break;
       case WM_COMMAND:
       case WM_SYSCOMMAND:
@@ -2514,6 +2598,28 @@ static LRESULT CALLBACK WndProc(HWND hwnd, UINT message,
 	  case IDM_PASTE:
 	    term_request_paste(term, CLIP_SYSTEM);
 	    break;
+      
+/* rutty: */
+#ifdef rutty
+	  case IDM_SCRIPTHALT:
+		script_close(&scriptdata);
+		logevent(NULL, "script stopped");
+		break;
+	  case IDM_SCRIPTSEND:
+    {
+      char scriptfilename[FILENAME_MAX]; 
+      Filename * scriptfile;
+		  if(prompt_scriptfile(hwnd, scriptfilename))
+      {
+		    script_init(&scriptdata, conf);	
+    	  scriptfile = filename_from_str(scriptfilename);
+        script_sendfile(&scriptdata, scriptfile);
+        filename_free(scriptfile);
+      }
+     } 
+	   break;
+#endif  /* rutty */               
+      
 	  case IDM_CLRSB:
 	    term_clrsb(term);
 	    break;
@@ -5795,11 +5901,29 @@ static void flip_full_screen()
     }
 }
 
-static size_t win_seat_output(Seat *seat, bool is_stderr,
-                              const void *data, size_t len)
+
+/* rutty: special entry point for ldisc.c - local backend
+ modified version for all other backends
+ */
+#ifdef rutty
+static size_t win_seat_output_local(Seat *seat, bool is_stderr, const void *data, size_t len)
 {
     return term_data(term, is_stderr, data, len);
 }
+
+static size_t win_seat_output(Seat *seat, bool is_stderr, const void *data, size_t len)
+{
+    script_remote(&scriptdata, (const char *) data, (int) len);
+    return term_data(term, is_stderr, data, len);
+}
+#else
+static size_t win_seat_output(Seat *seat, bool is_stderr, const void *data, size_t len)
+{
+    return term_data(term, is_stderr, data, len);
+}
+
+#endif  /* rutty */
+
 
 static bool win_seat_eof(Seat *seat)
 {
